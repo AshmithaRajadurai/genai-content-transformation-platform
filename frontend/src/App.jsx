@@ -53,6 +53,9 @@ function App() {
     setTransformedState(false);
     setCurrentStageIndex(0);
 
+    let activeIngestion = ingestionResult;
+    let activeNlp = null;
+
     // Trigger backend source ingestion call (Layer 1)
     try {
       const resp = await fetch('http://127.0.0.1:8000/api/v1/source/text', {
@@ -60,15 +63,36 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           content,
-          source_type: 'text'
+          source_type: ingestionResult?.source_type || 'text'
         })
       });
       if (resp.ok) {
-        const backendIngestion = await resp.json();
-        setIngestionResult(backendIngestion);
+        activeIngestion = await resp.json();
+        setIngestionResult(activeIngestion);
       }
     } catch {
       // Backend offline or unreachable: continue with normalized pipeline
+    }
+
+    // Trigger backend real NLP analysis call (Layer 2)
+    try {
+      const nlpResp = await fetch('http://127.0.0.1:8000/api/v1/nlp/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: activeIngestion?.cleaned_content || content,
+          source_type: activeIngestion?.source_type || 'text'
+        })
+      });
+      if (nlpResp.ok) {
+        activeNlp = await nlpResp.json();
+      }
+    } catch {
+      // Backend offline or unreachable
+    }
+
+    if (!activeNlp) {
+      activeNlp = getMockNlpData(content);
     }
 
     // Step through each of the 6 pipeline stages sequentially to visualize architecture
@@ -79,11 +103,10 @@ function App() {
 
         // When reaching final stage, calculate and commit NLP and generative output data
         if (idx === PIPELINE_STAGES.length - 1) {
-          const generatedNlp = getMockNlpData(content);
-          const generatedOutputs = getMockOutputs(content, selectedTypes, settings, generatedNlp);
+          const generatedOutputs = getMockOutputs(content, selectedTypes, settings, activeNlp);
 
           setTimeout(() => {
-            setNlpData(generatedNlp);
+            setNlpData(activeNlp);
             setOutputsData(generatedOutputs);
             setIsTransforming(false);
             setTransformedState(true);

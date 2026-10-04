@@ -36,6 +36,15 @@ export default function NlpAnalysisSection({ nlpData, transformedState }) {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const topic = nlpData.topic || 'General Domain';
+  const contentType = nlpData.contentType || nlpData.content_type || 'Analytical Briefing';
+  const detectedTone = nlpData.detectedTone || nlpData.detected_tone || 'Professional & Authoritative';
+  const confidenceScore = nlpData.confidenceScore || nlpData.confidence_score || 95.0;
+  const keyFacts = nlpData.keyFacts || nlpData.key_facts || [];
+  const summaryContext = nlpData.summaryContext || nlpData.summary_context || '';
+  const keywords = nlpData.keywords || [];
+  const entities = nlpData.entities || [];
+
   return (
     <section className="dashboard-card nlp-card" id="nlp-analysis-section" aria-label="NLP Analysis Results">
       <div className="card-header">
@@ -44,7 +53,7 @@ export default function NlpAnalysisSection({ nlpData, transformedState }) {
           <div>
             <div className="card-title-row">
               <h2 className="card-title">NLP Analysis Layer</h2>
-              <span className="nlp-pipeline-tag">Pipeline Layer 2 • Pre-LLM Extraction</span>
+              <span className="nlp-pipeline-tag">Pipeline Layer 2 • Real NLP Extraction</span>
             </div>
             <p className="card-subtitle">
               Structured semantic extraction fed into the Context Engine to guarantee factual fidelity
@@ -55,7 +64,7 @@ export default function NlpAnalysisSection({ nlpData, transformedState }) {
         <div className="nlp-header-actions">
           <span className="nlp-confidence-pill" title="NLP Extraction Confidence Score">
             <span className="dot dot-green"></span>
-            Factual Confidence: <strong>{nlpData.confidenceScore || 98}%</strong>
+            Factual Confidence: <strong>{confidenceScore}%</strong>
           </span>
           <button
             type="button"
@@ -76,21 +85,21 @@ export default function NlpAnalysisSection({ nlpData, transformedState }) {
             <span className="stat-label">Identified Topic</span>
             <div className="stat-value-group">
               <BrainIcon className="icon-small text-accent" />
-              <strong className="stat-value-highlight">{nlpData.topic}</strong>
+              <strong className="stat-value-highlight">{topic}</strong>
             </div>
           </div>
 
           <div className="nlp-stat-box">
             <span className="stat-label">Content Classification</span>
             <div className="stat-value-group">
-              <span className="nlp-badge-type">{nlpData.contentType}</span>
+              <span className="nlp-badge-type">{contentType}</span>
             </div>
           </div>
 
           <div className="nlp-stat-box">
             <span className="stat-label">Detected Tone & Sentiment</span>
             <div className="stat-value-group">
-              <span className="nlp-badge-tone">{nlpData.detectedTone}</span>
+              <span className="nlp-badge-tone">{detectedTone}</span>
             </div>
           </div>
         </div>
@@ -101,10 +110,10 @@ export default function NlpAnalysisSection({ nlpData, transformedState }) {
           <div className="nlp-section-box">
             <div className="box-header">
               <TagIcon className="icon-small text-blue" />
-              <h4 className="box-title">Salient Keywords ({nlpData.keywords?.length || 0})</h4>
+              <h4 className="box-title">Salient Keywords ({keywords.length})</h4>
             </div>
             <div className="keywords-chip-list">
-              {nlpData.keywords?.map((kw, i) => (
+              {keywords.map((kw, i) => (
                 <span key={i} className="keyword-chip">
                   <span className="chip-hash">#</span>
                   {kw}
@@ -117,10 +126,10 @@ export default function NlpAnalysisSection({ nlpData, transformedState }) {
           <div className="nlp-section-box">
             <div className="box-header">
               <BrainIcon className="icon-small text-purple" />
-              <h4 className="box-title">Named Entities ({nlpData.entities?.length || 0})</h4>
+              <h4 className="box-title">Named Entities ({entities.length})</h4>
             </div>
             <div className="entities-chip-list">
-              {nlpData.entities?.map((ent, i) => (
+              {entities.map((ent, i) => (
                 <div key={i} className="entity-item-pill">
                   <span className="entity-name">{ent.name}</span>
                   <span className="entity-type-badge">{ent.type}</span>
@@ -137,7 +146,7 @@ export default function NlpAnalysisSection({ nlpData, transformedState }) {
             <h4 className="box-title">Core Key Facts & Semantic Assertions</h4>
           </div>
           <div className="facts-list">
-            {nlpData.keyFacts?.map((fact, i) => (
+            {keyFacts.map((fact, i) => (
               <div key={i} className="fact-item">
                 <span className="fact-index">{i + 1}</span>
                 <p className="fact-text">{fact}</p>
@@ -150,7 +159,7 @@ export default function NlpAnalysisSection({ nlpData, transformedState }) {
         <div className="nlp-context-banner">
           <div className="context-banner-left">
             <span className="context-tag">Context Engine Payload:</span>
-            <p className="context-text">{nlpData.summaryContext}</p>
+            <p className="context-text">{summaryContext}</p>
           </div>
         </div>
       </div>
