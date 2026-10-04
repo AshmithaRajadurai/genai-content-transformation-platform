@@ -45,7 +45,9 @@ function App() {
   const [ingestionResult, setIngestionResult] = useState(null);
   const [nlpData, setNlpData] = useState(null);
   const [contextPayload, setContextPayload] = useState(null);
+  const [llmResult, setLlmResult] = useState(null);
   const [outputsData, setOutputsData] = useState(null);
+
 
 
   const handleTransform = async () => {
@@ -136,19 +138,41 @@ function App() {
       // Context Engine fallback
     }
 
+    // Trigger backend real LLM Generation call (Layer 4)
+    let activeLlm = null;
+    if (activeContext) {
+      try {
+        const llmResp = await fetch('http://127.0.0.1:8000/api/v1/llm/generate-batch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            context_payload: activeContext,
+            provider: 'auto',
+            temperature: 0.7
+          })
+        });
+        if (llmResp.ok) {
+          activeLlm = await llmResp.json();
+        }
+      } catch {
+        // LLM fallback
+      }
+    }
+
     // Step through each of the 6 pipeline stages sequentially to visualize architecture
     const stageDurationMs = 280;
     PIPELINE_STAGES.forEach((stage, idx) => {
       setTimeout(() => {
         setCurrentStageIndex(idx);
 
-        // When reaching final stage, calculate and commit NLP and generative output data
+        // When reaching final stage, calculate and commit NLP, context, LLM, and generative output data
         if (idx === PIPELINE_STAGES.length - 1) {
           const generatedOutputs = getMockOutputs(content, selectedTypes, settings, activeNlp);
 
           setTimeout(() => {
             setNlpData(activeNlp);
             setContextPayload(activeContext);
+            setLlmResult(activeLlm);
             setOutputsData(generatedOutputs);
             setIsTransforming(false);
             setTransformedState(true);
@@ -188,6 +212,7 @@ function App() {
     setIngestionResult(null);
     setNlpData(null);
     setContextPayload(null);
+    setLlmResult(null);
     setOutputsData(null);
   };
 
@@ -196,8 +221,10 @@ function App() {
     setIngestionResult(null);
     setNlpData(null);
     setContextPayload(null);
+    setLlmResult(null);
     setOutputsData(null);
   };
+
 
 
   return (
@@ -258,8 +285,10 @@ function App() {
             selectedTypes={selectedTypes}
             settings={settings}
             outputsData={outputsData}
+            llmResult={llmResult}
             onClearOutput={handleClearOutput}
           />
+
         </main>
 
         <Footer />

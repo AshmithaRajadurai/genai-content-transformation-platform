@@ -19,10 +19,11 @@ export default function OutputSection({
   selectedTypes,
   settings,
   outputsData,
+  llmResult,
   onClearOutput
 }) {
   const [selectedTab, setSelectedTab] = useState('');
-  const [viewMode, setViewMode] = useState('formatted'); // 'formatted' | 'json'
+  const [viewMode, setViewMode] = useState('formatted'); // 'formatted' | 'json' | 'llm_raw'
   const [copied, setCopied] = useState(false);
 
   // Active tab derivation
@@ -33,9 +34,23 @@ export default function OutputSection({
   const activeFormatInfo = OUTPUT_TYPES.find((item) => item.id === activeTab);
   const activeOutputContent = outputsData?.[activeTab];
 
+  const channelMap = {
+    linkedin: 'linkedin',
+    twitter: 'twitter',
+    advisory: 'advisory',
+    executive: 'executive_summary',
+    infographic: 'infographic',
+    presentation: 'presentation',
+    video: 'video_script'
+  };
+  const activeLlmKey = channelMap[activeTab] || activeTab;
+  const activeLlmItem = llmResult?.results?.[activeLlmKey];
+
   const handleCopyCurrent = () => {
     let textToCopy;
-    if (viewMode === 'json' || !activeOutputContent) {
+    if (viewMode === 'llm_raw' && activeLlmItem) {
+      textToCopy = activeLlmItem.content;
+    } else if (viewMode === 'json' || !activeOutputContent) {
       textToCopy = JSON.stringify(activeOutputContent || {}, null, 2);
     } else if (activeTab === 'linkedin') {
       textToCopy = `${activeOutputContent.title}\n\n${activeOutputContent.content}\n\n${activeOutputContent.hashtags?.join(' ')}`;
@@ -53,6 +68,7 @@ export default function OutputSection({
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
 
   const renderFormatIcon = (id) => {
     switch (id) {
@@ -81,9 +97,17 @@ export default function OutputSection({
         <div className="card-header-left">
           <span className="card-step-badge">6</span>
           <div>
-            <h2 id="output-results-heading" className="card-title">Generated Communication Artefacts</h2>
+            <div className="card-title-row">
+              <h2 id="output-results-heading" className="card-title">Generated Communication Artefacts</h2>
+              {transformedState && llmResult && (
+                <span className="llm-pipeline-tag" title="LLM Engine Execution Details">
+                  <span className="dot dot-green"></span>
+                  LLM Engine: <strong>{llmResult.provider?.toUpperCase()}</strong> • {llmResult.total_tokens} Tokens • {llmResult.execution_time_ms}ms
+                </span>
+              )}
+            </div>
             <p className="card-subtitle">
-              Multi-channel outputs synthesized from the NLP Context Engine via structured generative schemas
+              Multi-channel outputs synthesized from the NLP Context Engine via grounded LLM generation
             </p>
           </div>
         </div>
@@ -107,7 +131,19 @@ export default function OutputSection({
                 <CodeIcon className="icon-tiny" />
                 <span>JSON Schema</span>
               </button>
+              {activeLlmItem && (
+                <button
+                  type="button"
+                  className={`mode-btn ${viewMode === 'llm_raw' ? 'mode-btn-active' : ''}`}
+                  onClick={() => setViewMode('llm_raw')}
+                  title="View direct generation from LLM Engine"
+                >
+                  <SparklesIcon className="icon-tiny text-accent" />
+                  <span>LLM Raw</span>
+                </button>
+              )}
             </div>
+
 
             <button
               type="button"
@@ -210,8 +246,26 @@ export default function OutputSection({
                 </div>
               </div>
 
-              {/* View Mode: JSON Schema View */}
-              {viewMode === 'json' ? (
+              {/* View Mode: Raw LLM Output View */}
+              {viewMode === 'llm_raw' ? (
+                <div className="llm-raw-view">
+                  <div className="llm-raw-header">
+                    <div className="llm-raw-header-left">
+                      <SparklesIcon className="icon-tiny text-accent" />
+                      <span className="llm-raw-title">
+                        Raw LLM Generation: {activeLlmItem?.channel_name || activeFormatInfo.label}
+                      </span>
+                    </div>
+                    <div className="llm-raw-badges">
+                      <span className="llm-badge-model">{activeLlmItem?.model || 'semantic-fusion-engine-v1'}</span>
+                      <span className="llm-badge-tokens">{activeLlmItem?.tokens_used || 0} tokens</span>
+                    </div>
+                  </div>
+                  <pre className="llm-raw-code-block">
+                    <code>{activeLlmItem?.content || 'No LLM output available for this channel.'}</code>
+                  </pre>
+                </div>
+              ) : viewMode === 'json' ? (
                 <div className="json-schema-view">
                   <div className="json-header">
                     <div className="json-header-left">
@@ -227,6 +281,7 @@ export default function OutputSection({
               ) : (
                 /* View Mode: Formatted Interactive View */
                 <div className="formatted-artefact-canvas">
+
                   {/* LinkedIn Format */}
                   {activeTab === 'linkedin' && (
                     <div className="artefact-card linkedin-view">
