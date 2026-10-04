@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.app.database import db
 from backend.app.routes.source_routes import router as source_router
 from backend.app.routes.nlp_routes import router as nlp_router
+from backend.app.routes.context_routes import router as context_router
 
 app = FastAPI(
     title="GenAI Content Transformation Platform",
@@ -28,6 +29,8 @@ app.add_middleware(
 # Register API Routers
 app.include_router(source_router)
 app.include_router(nlp_router)
+app.include_router(context_router)
+
 
 
 @app.get("/", tags=["System"])
