@@ -5,6 +5,12 @@ from backend.app.models.nlp_model import (
     NamedEntity,
     KeywordItem
 )
+from backend.app.models.context_model import (
+    ChannelInstruction,
+    ContextBuildRequest,
+    ChannelContextPrompt,
+    CompiledContextPayload
+)
 
 __all__ = [
     "SourceTextInput",
@@ -12,5 +18,10 @@ __all__ = [
     "NLPAnalysisRequest",
     "NLPAnalysisResponse",
     "NamedEntity",
-    "KeywordItem"
+    "KeywordItem",
+    "ChannelInstruction",
+    "ContextBuildRequest",
+    "ChannelContextPrompt",
+    "CompiledContextPayload"
 ]
+
