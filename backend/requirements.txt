@@ -2,3 +2,6 @@ fastapi
 uvicorn[standard]
 pymongo
 python-dotenv
+python-multipart
+pypdf
+python-docx

@@ -181,6 +181,19 @@
   color: #fca5a5;
 }
 
+.btn-pill-accent {
+  background: rgba(99, 102, 241, 0.18);
+  border-color: rgba(99, 102, 241, 0.4);
+  color: #c7d2fe;
+  font-weight: 600;
+}
+
+.btn-pill-accent:hover {
+  background: rgba(99, 102, 241, 0.3);
+  border-color: rgba(99, 102, 241, 0.6);
+  color: #ffffff;
+}
+
 /* ==========================================================================
    Section 1: Source Content Input
    ========================================================================== */
@@ -195,6 +208,61 @@
   font-size: 12px;
   color: var(--text-dim);
   font-weight: 500;
+}
+
+.source-alert-banner {
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #fde68a;
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
+.source-ingested-meta-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.meta-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.meta-banner-title {
+  font-size: 13px;
+  color: #a7f3d0;
+}
+
+.meta-banner-pills {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ingest-tag-pill {
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+}
+
+.ingest-tag-pill strong {
+  color: var(--text-main);
 }
 
 .textarea-wrapper {

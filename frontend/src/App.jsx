@@ -42,15 +42,34 @@ function App() {
   const [isTransforming, setIsTransforming] = useState(false);
   const [currentStageIndex, setCurrentStageIndex] = useState(0);
   const [transformedState, setTransformedState] = useState(false);
+  const [ingestionResult, setIngestionResult] = useState(null);
   const [nlpData, setNlpData] = useState(null);
   const [outputsData, setOutputsData] = useState(null);
 
-  const handleTransform = () => {
+  const handleTransform = async () => {
     if (!content.trim() || selectedTypes.length === 0) return;
 
     setIsTransforming(true);
     setTransformedState(false);
     setCurrentStageIndex(0);
+
+    // Trigger backend source ingestion call (Layer 1)
+    try {
+      const resp = await fetch('http://127.0.0.1:8000/api/v1/source/text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content,
+          source_type: 'text'
+        })
+      });
+      if (resp.ok) {
+        const backendIngestion = await resp.json();
+        setIngestionResult(backendIngestion);
+      }
+    } catch {
+      // Backend offline or unreachable: continue with normalized pipeline
+    }
 
     // Step through each of the 6 pipeline stages sequentially to visualize architecture
     const stageDurationMs = 280;
@@ -101,12 +120,14 @@ function App() {
     setTransformedState(false);
     setIsTransforming(false);
     setCurrentStageIndex(0);
+    setIngestionResult(null);
     setNlpData(null);
     setOutputsData(null);
   };
 
   const handleClearOutput = () => {
     setTransformedState(false);
+    setIngestionResult(null);
     setNlpData(null);
     setOutputsData(null);
   };
@@ -123,6 +144,8 @@ function App() {
           <SourceInputSection
             content={content}
             setContent={setContent}
+            ingestionResult={ingestionResult}
+            setIngestionResult={setIngestionResult}
           />
 
           {/* Section 2: Target Output Formats Multi-select */}
