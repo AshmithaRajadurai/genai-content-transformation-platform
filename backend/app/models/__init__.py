@@ -11,6 +11,13 @@ from backend.app.models.context_model import (
     ChannelContextPrompt,
     CompiledContextPayload
 )
+from backend.app.models.llm_model import (
+    LLMProviderInfo,
+    LLMGenerationRequest,
+    LLMGenerationResponse,
+    LLMBatchGenerationRequest,
+    LLMBatchGenerationResponse
+)
 
 __all__ = [
     "SourceTextInput",
@@ -22,6 +29,12 @@ __all__ = [
     "ChannelInstruction",
     "ContextBuildRequest",
     "ChannelContextPrompt",
-    "CompiledContextPayload"
+    "CompiledContextPayload",
+    "LLMProviderInfo",
+    "LLMGenerationRequest",
+    "LLMGenerationResponse",
+    "LLMBatchGenerationRequest",
+    "LLMBatchGenerationResponse"
 ]
+
 
