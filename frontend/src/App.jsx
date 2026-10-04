@@ -44,7 +44,9 @@ function App() {
   const [transformedState, setTransformedState] = useState(false);
   const [ingestionResult, setIngestionResult] = useState(null);
   const [nlpData, setNlpData] = useState(null);
+  const [contextPayload, setContextPayload] = useState(null);
   const [outputsData, setOutputsData] = useState(null);
+
 
   const handleTransform = async () => {
     if (!content.trim() || selectedTypes.length === 0) return;
@@ -95,6 +97,45 @@ function App() {
       activeNlp = getMockNlpData(content);
     }
 
+    // Trigger backend real Context Engine compilation (Layer 3)
+    let activeContext = null;
+    try {
+      const channelMapping = {
+        linkedin: 'linkedin',
+        twitter: 'twitter',
+        advisory: 'advisory',
+        executive: 'executive_summary',
+        infographic: 'infographic',
+        presentation: 'presentation',
+        video: 'video_script'
+      };
+      const targetChannels = selectedTypes.map(t => channelMapping[t] || t);
+      const detailParam = settings.detailLevel?.toLowerCase().includes('concise')
+        ? 'concise'
+        : (settings.detailLevel?.toLowerCase().includes('in-depth') ? 'comprehensive' : 'balanced');
+
+      const contextResp = await fetch('http://127.0.0.1:8000/api/v1/context/build', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          source_text: activeIngestion?.cleaned_content || content,
+          title: activeIngestion?.detected_title || null,
+          source_type: activeIngestion?.source_type || 'text',
+          nlp_analysis: activeNlp,
+          target_channels: targetChannels,
+          audience: settings.audience,
+          tone: settings.tone,
+          language: settings.language,
+          detail_level: detailParam
+        })
+      });
+      if (contextResp.ok) {
+        activeContext = await contextResp.json();
+      }
+    } catch {
+      // Context Engine fallback
+    }
+
     // Step through each of the 6 pipeline stages sequentially to visualize architecture
     const stageDurationMs = 280;
     PIPELINE_STAGES.forEach((stage, idx) => {
@@ -107,6 +148,7 @@ function App() {
 
           setTimeout(() => {
             setNlpData(activeNlp);
+            setContextPayload(activeContext);
             setOutputsData(generatedOutputs);
             setIsTransforming(false);
             setTransformedState(true);
@@ -145,6 +187,7 @@ function App() {
     setCurrentStageIndex(0);
     setIngestionResult(null);
     setNlpData(null);
+    setContextPayload(null);
     setOutputsData(null);
   };
 
@@ -152,8 +195,10 @@ function App() {
     setTransformedState(false);
     setIngestionResult(null);
     setNlpData(null);
+    setContextPayload(null);
     setOutputsData(null);
   };
+
 
   return (
     <div className="app-shell">
@@ -199,11 +244,13 @@ function App() {
             transformedState={transformedState}
           />
 
-          {/* Section 5: NLP Analysis Layer (Appears before outputs) */}
+          {/* Section 5: NLP Analysis Layer & Context Engine */}
           <NlpAnalysisSection
             nlpData={nlpData}
+            contextPayload={contextPayload}
             transformedState={transformedState}
           />
+
 
           {/* Section 6: Generated Communication Artefacts */}
           <OutputSection

@@ -1,8 +1,11 @@
 import { useState } from 'react';
-import { BrainIcon, TagIcon, CopyIcon, CheckCircleIcon } from './Icons';
+import { BrainIcon, TagIcon, CopyIcon, CheckCircleIcon, ShieldAlertIcon, SparklesIcon } from './Icons';
 
-export default function NlpAnalysisSection({ nlpData, transformedState }) {
-  const [copied, setCopied] = useState(false);
+export default function NlpAnalysisSection({ nlpData, contextPayload, transformedState }) {
+  const [copiedNlp, setCopiedNlp] = useState(false);
+  const [copiedContext, setCopiedContext] = useState(false);
+  const [selectedPromptKey, setSelectedPromptKey] = useState(null);
+  const [showPromptInspector, setShowPromptInspector] = useState(false);
 
   if (!transformedState || !nlpData) {
     return (
@@ -11,19 +14,21 @@ export default function NlpAnalysisSection({ nlpData, transformedState }) {
           <div className="card-header-left">
             <span className="card-step-badge">5</span>
             <div>
-              <h2 className="card-title">NLP Analysis Layer</h2>
+              <h2 className="card-title">NLP Analysis & Context Engine</h2>
               <p className="card-subtitle">
-                Extracts topics, keywords, named entities, and key facts prior to LLM generation
+                Extracts topics, keywords, named entities, and compiles factual guardrails for LLM generation
               </p>
             </div>
           </div>
-          <span className="nlp-pipeline-tag">Pipeline Layer 2</span>
+          <div className="pipeline-layer-badges">
+            <span className="nlp-pipeline-tag">Pipeline Layer 2 & 3</span>
+          </div>
         </div>
 
         <div className="nlp-idle-prompt">
           <BrainIcon className="nlp-idle-icon" />
           <p className="nlp-idle-text">
-            Provide source content and click <strong>&quot;Transform Content&quot;</strong> to inspect the structured NLP extraction (topics, keywords, entities, and facts).
+            Provide source content and click <strong>&quot;Transform Content&quot;</strong> to inspect the structured NLP extraction (topics, keywords, entities, and facts) and compiled Context Engine prompts.
           </p>
         </div>
       </section>
@@ -32,8 +37,15 @@ export default function NlpAnalysisSection({ nlpData, transformedState }) {
 
   const handleCopyNlp = () => {
     navigator.clipboard.writeText(JSON.stringify(nlpData, null, 2));
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setCopiedNlp(true);
+    setTimeout(() => setCopiedNlp(false), 2000);
+  };
+
+  const handleCopyContext = () => {
+    if (!contextPayload) return;
+    navigator.clipboard.writeText(JSON.stringify(contextPayload, null, 2));
+    setCopiedContext(true);
+    setTimeout(() => setCopiedContext(false), 2000);
   };
 
   const topic = nlpData.topic || 'General Domain';
@@ -45,18 +57,25 @@ export default function NlpAnalysisSection({ nlpData, transformedState }) {
   const keywords = nlpData.keywords || [];
   const entities = nlpData.entities || [];
 
+  const channelPromptKeys = contextPayload?.channel_prompts ? Object.keys(contextPayload.channel_prompts) : [];
+  const activePromptKey = selectedPromptKey || (channelPromptKeys.length > 0 ? channelPromptKeys[0] : null);
+  const activePrompt = activePromptKey && contextPayload?.channel_prompts ? contextPayload.channel_prompts[activePromptKey] : null;
+
   return (
-    <section className="dashboard-card nlp-card" id="nlp-analysis-section" aria-label="NLP Analysis Results">
+    <section className="dashboard-card nlp-card" id="nlp-analysis-section" aria-label="NLP Analysis & Context Engine Results">
       <div className="card-header">
         <div className="card-header-left">
           <span className="card-step-badge">5</span>
           <div>
             <div className="card-title-row">
-              <h2 className="card-title">NLP Analysis Layer</h2>
+              <h2 className="card-title">NLP Analysis & Context Engine</h2>
               <span className="nlp-pipeline-tag">Pipeline Layer 2 • Real NLP Extraction</span>
+              {contextPayload && (
+                <span className="context-pipeline-tag">Pipeline Layer 3 • Grounded Prompts</span>
+              )}
             </div>
             <p className="card-subtitle">
-              Structured semantic extraction fed into the Context Engine to guarantee factual fidelity
+              Structured semantic extraction fused with audience persona to guarantee factual fidelity and zero hallucination
             </p>
           </div>
         </div>
@@ -73,8 +92,19 @@ export default function NlpAnalysisSection({ nlpData, transformedState }) {
             title="Copy structured NLP JSON"
           >
             <CopyIcon className="icon-tiny" />
-            <span>{copied ? 'Copied JSON!' : 'Copy NLP JSON'}</span>
+            <span>{copiedNlp ? 'Copied NLP!' : 'Copy NLP JSON'}</span>
           </button>
+          {contextPayload && (
+            <button
+              type="button"
+              className="btn-pill btn-pill-accent"
+              onClick={handleCopyContext}
+              title="Copy compiled Context Engine JSON"
+            >
+              <CopyIcon className="icon-tiny" />
+              <span>{copiedContext ? 'Copied Context!' : 'Copy Context JSON'}</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -158,10 +188,110 @@ export default function NlpAnalysisSection({ nlpData, transformedState }) {
         {/* Row 4: Summary Context Passed to Context Engine */}
         <div className="nlp-context-banner">
           <div className="context-banner-left">
-            <span className="context-tag">Context Engine Payload:</span>
+            <span className="context-tag">Context Engine Summary:</span>
             <p className="context-text">{summaryContext}</p>
           </div>
         </div>
+
+        {/* Row 5: Real Context Engine (Pipeline Layer 3) Panel */}
+        {contextPayload && (
+          <div className="context-engine-panel">
+            <div className="context-panel-header">
+              <div className="context-panel-title-group">
+                <div className="context-layer-indicator">
+                  <SparklesIcon className="icon-tiny text-cyan" />
+                  <span className="context-layer-label">Layer 3: Context Engine</span>
+                </div>
+                <h3 className="context-panel-title">Factual Grounding & Prompt Compiler</h3>
+              </div>
+              <div className="context-badge-group">
+                <span className="context-metric-pill">
+                  {channelPromptKeys.length} Channel Prompts Compiled
+                </span>
+                <button
+                  type="button"
+                  className="btn-inspect-prompts"
+                  onClick={() => setShowPromptInspector(!showPromptInspector)}
+                >
+                  {showPromptInspector ? 'Hide Compiled Prompts' : 'Inspect LLM Prompts'}
+                </button>
+              </div>
+            </div>
+
+            {/* Directives & Target Audience Matrix */}
+            <div className="context-directives-grid">
+              <div className="context-directive-card">
+                <span className="directive-label">Audience Persona Target</span>
+                <strong className="directive-value">{contextPayload.audience_persona}</strong>
+              </div>
+              <div className="context-directive-card">
+                <span className="directive-label">Communication Tone Directive</span>
+                <strong className="directive-value">{contextPayload.tone_guideline}</strong>
+              </div>
+              <div className="context-directive-card">
+                <span className="directive-label">Language & Detail Depth</span>
+                <strong className="directive-value">
+                  {contextPayload.language} • {contextPayload.detail_level?.toUpperCase()}
+                </strong>
+              </div>
+            </div>
+
+            {/* Anti-Hallucination Guardrails Banner */}
+            <div className="context-guardrails-box">
+              <div className="guardrails-header">
+                <ShieldAlertIcon className="icon-small text-cyan" />
+                <span className="guardrails-title">Anti-Hallucination & Entity Preservation Directives</span>
+              </div>
+              <pre className="guardrails-pre">{contextPayload.global_system_instruction}</pre>
+            </div>
+
+            {/* Interactive Prompt Inspector */}
+            {showPromptInspector && activePrompt && (
+              <div className="context-prompt-inspector-box">
+                <div className="channel-tab-bar">
+                  {channelPromptKeys.map((key) => {
+                    const promptItem = contextPayload.channel_prompts[key];
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        className={`channel-tab-btn ${activePromptKey === key ? 'channel-tab-active' : ''}`}
+                        onClick={() => setSelectedPromptKey(key)}
+                      >
+                        {promptItem.channel_name || key}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="active-prompt-details">
+                  <div className="prompt-meta-row">
+                    <span className="prompt-channel-tag">{activePrompt.channel_name}</span>
+                    <span className="prompt-rules-count">
+                      {activePrompt.grounding_rules?.length || 0} Grounding Rules Active
+                    </span>
+                  </div>
+
+                  {activePrompt.grounding_rules && activePrompt.grounding_rules.length > 0 && (
+                    <div className="prompt-rules-list">
+                      {activePrompt.grounding_rules.map((rule, idx) => (
+                        <div key={idx} className="rule-item">
+                          <span className="rule-dot"></span>
+                          <span>{rule}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="prompt-content-view">
+                    <div className="prompt-view-label">Compiled User Prompt (Passed to LLM Engine):</div>
+                    <pre className="prompt-view-code">{activePrompt.user_prompt}</pre>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </section>
   );
