@@ -7,11 +7,12 @@ from backend.app.routes.nlp_routes import router as nlp_router
 from backend.app.routes.context_routes import router as context_router
 from backend.app.routes.llm_routes import router as llm_router
 from backend.app.routes.transformation_routes import router as transformation_router
+from backend.app.routes.history_routes import router as history_router
 
 app = FastAPI(
     title="GenAI Content Transformation Platform",
-    description="AI-powered multi-channel content transformation platform integrating NLP, Context Engine, LLM, and Generative AI.",
-    version="0.2.0"
+    description="AI-powered multi-channel content transformation platform integrating NLP, Context Engine, LLM, Generative AI, and MongoDB Storage.",
+    version="0.3.0"
 )
 
 # Enable CORS for frontend clients
@@ -34,6 +35,7 @@ app.include_router(nlp_router)
 app.include_router(context_router)
 app.include_router(llm_router)
 app.include_router(transformation_router)
+app.include_router(history_router)
 
 
 
