@@ -6,6 +6,7 @@ from backend.app.routes.source_routes import router as source_router
 from backend.app.routes.nlp_routes import router as nlp_router
 from backend.app.routes.context_routes import router as context_router
 from backend.app.routes.llm_routes import router as llm_router
+from backend.app.routes.transformation_routes import router as transformation_router
 
 app = FastAPI(
     title="GenAI Content Transformation Platform",
@@ -32,6 +33,8 @@ app.include_router(source_router)
 app.include_router(nlp_router)
 app.include_router(context_router)
 app.include_router(llm_router)
+app.include_router(transformation_router)
+
 
 
 
