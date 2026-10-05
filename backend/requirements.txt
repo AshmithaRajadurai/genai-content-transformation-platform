@@ -1,7 +1,8 @@
 fastapi
 uvicorn[standard]
 pymongo
+dnspython
 python-dotenv
 python-multipart
 pypdf
-python-docx
+python-docx

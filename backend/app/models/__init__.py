@@ -33,6 +33,12 @@ from backend.app.models.transformation_model import (
     TransformationPipelineRequest,
     TransformationPipelineResponse
 )
+from backend.app.models.storage_model import (
+    TransformationRecord,
+    HistoryItemSummary,
+    HistoryListResponse,
+    StorageHealthResponse
+)
 
 __all__ = [
     "SourceTextInput",
@@ -62,8 +68,13 @@ __all__ = [
     "VideoScriptArtefact",
     "VideoScene",
     "TransformationPipelineRequest",
-    "TransformationPipelineResponse"
+    "TransformationPipelineResponse",
+    "TransformationRecord",
+    "HistoryItemSummary",
+    "HistoryListResponse",
+    "StorageHealthResponse"
 ]
+
 
 
 
