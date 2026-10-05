@@ -57,106 +57,45 @@ function App() {
     setTransformedState(false);
     setCurrentStageIndex(0);
 
-    let activeIngestion = ingestionResult;
+    // Trigger backend real end-to-end Generative AI Transformation Pipeline (Layers 1-5)
+    let pipelineResult = null;
     let activeNlp = null;
+    let activeContext = null;
+    let activeLlm = null;
+    let generatedArtefacts = null;
 
-    // Trigger backend source ingestion call (Layer 1)
     try {
-      const resp = await fetch('http://127.0.0.1:8000/api/v1/source/text', {
+      const transformResp = await fetch('http://127.0.0.1:8000/api/v1/transform/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          content,
-          source_type: ingestionResult?.source_type || 'text'
+          source_text: ingestionResult?.cleaned_content || content,
+          title: ingestionResult?.detected_title || null,
+          source_type: ingestionResult?.source_type || 'text',
+          target_channels: selectedTypes,
+          audience: settings.audience,
+          tone: settings.tone,
+          language: settings.language,
+          detail_level: settings.detailLevel,
+          provider: 'auto'
         })
       });
-      if (resp.ok) {
-        activeIngestion = await resp.json();
-        setIngestionResult(activeIngestion);
+      if (transformResp.ok) {
+        pipelineResult = await transformResp.json();
+        activeNlp = pipelineResult.nlp_analysis;
+        activeContext = pipelineResult.context_payload;
+        activeLlm = pipelineResult.llm_batch_response;
+        generatedArtefacts = pipelineResult.artefacts;
       }
     } catch {
-      // Backend offline or unreachable: continue with normalized pipeline
-    }
-
-    // Trigger backend real NLP analysis call (Layer 2)
-    try {
-      const nlpResp = await fetch('http://127.0.0.1:8000/api/v1/nlp/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          content: activeIngestion?.cleaned_content || content,
-          source_type: activeIngestion?.source_type || 'text'
-        })
-      });
-      if (nlpResp.ok) {
-        activeNlp = await nlpResp.json();
-      }
-    } catch {
-      // Backend offline or unreachable
+      // Backend offline or unreachable: continue with fallback
     }
 
     if (!activeNlp) {
       activeNlp = getMockNlpData(content);
     }
-
-    // Trigger backend real Context Engine compilation (Layer 3)
-    let activeContext = null;
-    try {
-      const channelMapping = {
-        linkedin: 'linkedin',
-        twitter: 'twitter',
-        advisory: 'advisory',
-        executive: 'executive_summary',
-        infographic: 'infographic',
-        presentation: 'presentation',
-        video: 'video_script'
-      };
-      const targetChannels = selectedTypes.map(t => channelMapping[t] || t);
-      const detailParam = settings.detailLevel?.toLowerCase().includes('concise')
-        ? 'concise'
-        : (settings.detailLevel?.toLowerCase().includes('in-depth') ? 'comprehensive' : 'balanced');
-
-      const contextResp = await fetch('http://127.0.0.1:8000/api/v1/context/build', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          source_text: activeIngestion?.cleaned_content || content,
-          title: activeIngestion?.detected_title || null,
-          source_type: activeIngestion?.source_type || 'text',
-          nlp_analysis: activeNlp,
-          target_channels: targetChannels,
-          audience: settings.audience,
-          tone: settings.tone,
-          language: settings.language,
-          detail_level: detailParam
-        })
-      });
-      if (contextResp.ok) {
-        activeContext = await contextResp.json();
-      }
-    } catch {
-      // Context Engine fallback
-    }
-
-    // Trigger backend real LLM Generation call (Layer 4)
-    let activeLlm = null;
-    if (activeContext) {
-      try {
-        const llmResp = await fetch('http://127.0.0.1:8000/api/v1/llm/generate-batch', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            context_payload: activeContext,
-            provider: 'auto',
-            temperature: 0.7
-          })
-        });
-        if (llmResp.ok) {
-          activeLlm = await llmResp.json();
-        }
-      } catch {
-        // LLM fallback
-      }
+    if (!generatedArtefacts) {
+      generatedArtefacts = getMockOutputs(content, selectedTypes, settings, activeNlp);
     }
 
     // Step through each of the 6 pipeline stages sequentially to visualize architecture
@@ -167,13 +106,11 @@ function App() {
 
         // When reaching final stage, calculate and commit NLP, context, LLM, and generative output data
         if (idx === PIPELINE_STAGES.length - 1) {
-          const generatedOutputs = getMockOutputs(content, selectedTypes, settings, activeNlp);
-
           setTimeout(() => {
             setNlpData(activeNlp);
             setContextPayload(activeContext);
             setLlmResult(activeLlm);
-            setOutputsData(generatedOutputs);
+            setOutputsData(generatedArtefacts);
             setIsTransforming(false);
             setTransformedState(true);
 
@@ -187,6 +124,7 @@ function App() {
       }, idx * stageDurationMs);
     });
   };
+
 
   const handleReset = () => {
     setContent('');

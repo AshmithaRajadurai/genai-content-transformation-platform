@@ -377,7 +377,7 @@ export default function OutputSection({
 
                       <div className="executive-summary-block">
                         <h4 className="exec-section-label">Strategic TL;DR</h4>
-                        <p className="exec-summary-text">{activeOutputContent.summary}</p>
+                        <p className="exec-summary-text">{activeOutputContent.summary || activeOutputContent.tldr}</p>
                       </div>
 
                       <div className="executive-grid">
@@ -413,24 +413,24 @@ export default function OutputSection({
 
                       <div className="infographic-headline-stat">
                         <span className="stat-sub">Headline Metric</span>
-                        <div className="stat-big">{activeOutputContent.headline_stat}</div>
+                        <div className="stat-big">{activeOutputContent.headline_stat || activeOutputContent.hero_stat}</div>
                       </div>
 
                       <div className="infographic-stats-grid">
-                        {activeOutputContent.data_callouts?.map((item, i) => (
+                        {(activeOutputContent.data_callouts || activeOutputContent.sections)?.map((item, i) => (
                           <div key={i} className="callout-card">
                             <span className="callout-metric">{item.metric}</span>
-                            <span className="callout-label">{item.label}</span>
+                            <span className="callout-label">{item.label || item.title}</span>
                           </div>
                         ))}
                       </div>
 
                       <div className="infographic-sections-row">
-                        {activeOutputContent.visual_sections?.map((sec, i) => (
+                        {(activeOutputContent.visual_sections || activeOutputContent.sections)?.map((sec, i) => (
                           <div key={i} className="visual-section-box">
-                            <h4 className="section-box-header">{sec.header}</h4>
+                            <h4 className="section-box-header">{sec.header || sec.title}</h4>
                             <ul className="section-bullets">
-                              {sec.bullet_points?.map((bp, j) => (
+                              {(sec.bullet_points || [sec.text])?.map((bp, j) => (
                                 <li key={j}>{bp}</li>
                               ))}
                             </ul>
@@ -457,10 +457,11 @@ export default function OutputSection({
                               <h4 className="slide-title">{slide.title}</h4>
                             </div>
                             <ul className="slide-bullets">
-                              {slide.content?.map((bullet, j) => (
+                              {(slide.bullets || slide.content)?.map((bullet, j) => (
                                 <li key={j}>{bullet}</li>
                               ))}
                             </ul>
+
                             <div className="speaker-notes-box">
                               <span className="notes-label">Speaker Notes:</span>
                               <p className="notes-text">&quot;{slide.speaker_notes}&quot;</p>
