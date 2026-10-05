@@ -21,9 +21,11 @@ from backend.app.models.transformation_model import (
     TransformationPipelineRequest,
     TransformationPipelineResponse
 )
+from backend.app.models.storage_model import TransformationRecord
 from backend.app.services.nlp_service import NLPService
 from backend.app.services.context_service import ContextService
 from backend.app.services.llm_service import LLMService
+from backend.app.services.storage_service import StorageService
 
 
 class TransformationService:
@@ -407,9 +409,34 @@ class TransformationService:
                 artefacts["video"] = cls.structure_video(raw_text, nlp_data, resolved_title).model_dump()
 
         latency_ms = round((time.time() - t0) * 1000, 2)
+        transformation_id = str(uuid.uuid4())
+
+        # Persist to Storage Layer (MongoDB + resilient session buffer)
+        try:
+            record = TransformationRecord(
+                transformation_id=transformation_id,
+                source_title=resolved_title,
+                source_type=request.source_type or "text",
+                source_text=cleaned_text[:10000],
+                selected_channels=request.target_channels,
+                audience=request.audience or "General Enterprise",
+                tone=request.tone or "Professional",
+                language=request.language or "English",
+                detail_level=request.detail_level or "Balanced",
+                detected_topic=nlp_data.topic,
+                keywords=nlp_data.keywords[:10],
+                entities_count=len(nlp_data.entities),
+                key_facts_count=len(nlp_data.key_facts),
+                artefacts=artefacts,
+                total_tokens=llm_batch_response.total_tokens,
+                execution_time_ms=latency_ms
+            )
+            StorageService.save_transformation(record)
+        except Exception:
+            pass
 
         return TransformationPipelineResponse(
-            transformation_id=str(uuid.uuid4()),
+            transformation_id=transformation_id,
             source_title=resolved_title,
             source_type=request.source_type or "text",
             nlp_analysis=nlp_data,
@@ -419,3 +446,4 @@ class TransformationService:
             total_tokens=llm_batch_response.total_tokens,
             execution_time_ms=latency_ms
         )
+
