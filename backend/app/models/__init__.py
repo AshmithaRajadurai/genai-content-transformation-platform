@@ -18,6 +18,21 @@ from backend.app.models.llm_model import (
     LLMBatchGenerationRequest,
     LLMBatchGenerationResponse
 )
+from backend.app.models.transformation_model import (
+    LinkedInArtefact,
+    TwitterArtefact,
+    TweetItem,
+    AdvisoryArtefact,
+    ExecutiveSummaryArtefact,
+    InfographicArtefact,
+    InfographicSection,
+    PresentationArtefact,
+    SlideItem,
+    VideoScriptArtefact,
+    VideoScene,
+    TransformationPipelineRequest,
+    TransformationPipelineResponse
+)
 
 __all__ = [
     "SourceTextInput",
@@ -34,7 +49,21 @@ __all__ = [
     "LLMGenerationRequest",
     "LLMGenerationResponse",
     "LLMBatchGenerationRequest",
-    "LLMBatchGenerationResponse"
+    "LLMBatchGenerationResponse",
+    "LinkedInArtefact",
+    "TwitterArtefact",
+    "TweetItem",
+    "AdvisoryArtefact",
+    "ExecutiveSummaryArtefact",
+    "InfographicArtefact",
+    "InfographicSection",
+    "PresentationArtefact",
+    "SlideItem",
+    "VideoScriptArtefact",
+    "VideoScene",
+    "TransformationPipelineRequest",
+    "TransformationPipelineResponse"
 ]
+
 
 
