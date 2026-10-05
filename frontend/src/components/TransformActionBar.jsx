@@ -1,10 +1,11 @@
-import { SparklesIcon, RefreshIcon } from './Icons';
+import { SparklesIcon, RefreshIcon, DatabaseIcon } from './Icons';
 
 export default function TransformActionBar({
   content,
   selectedTypesCount,
   onTransform,
   onReset,
+  onOpenHistory,
   isTransforming
 }) {
   const isReady = content.trim().length > 0 && selectedTypesCount > 0;
@@ -27,6 +28,18 @@ export default function TransformActionBar({
       </div>
 
       <div className="action-bar-buttons">
+        {onOpenHistory && (
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={onOpenHistory}
+            title="View saved transformations in MongoDB"
+          >
+            <DatabaseIcon className="icon-small text-emerald-400" />
+            <span>History</span>
+          </button>
+        )}
+
         <button
           type="button"
           className="btn-secondary"

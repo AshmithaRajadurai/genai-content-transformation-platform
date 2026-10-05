@@ -8,6 +8,7 @@ import TransformActionBar from './components/TransformActionBar';
 import PipelineProgressSection from './components/PipelineProgressSection';
 import NlpAnalysisSection from './components/NlpAnalysisSection';
 import OutputSection from './components/OutputSection';
+import HistoryModal from './components/HistoryModal';
 import Footer from './components/Footer';
 import {
   AUDIENCE_OPTIONS,
@@ -22,6 +23,7 @@ import {
 
 function App() {
   const [content, setContent] = useState('');
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [selectedTypes, setSelectedTypes] = useState([
     'linkedin',
     'twitter',
@@ -163,14 +165,55 @@ function App() {
     setOutputsData(null);
   };
 
+  const handleSelectHistoricalRecord = (record) => {
+    if (!record) return;
+    setContent(record.source_text || '');
+    if (record.selected_channels && record.selected_channels.length > 0) {
+      setSelectedTypes(record.selected_channels);
+    }
+    setSettings((prev) => ({
+      ...prev,
+      audience: record.audience || prev.audience,
+      tone: record.tone || prev.tone,
+      language: record.language || prev.language,
+      detailLevel: record.detail_level || prev.detailLevel
+    }));
 
+    const loadedNlp = {
+      topic: record.detected_topic || 'Enterprise Intelligence',
+      keywords: record.keywords || [],
+      sentiment: 'Neutral',
+      sentiment_score: 0.0,
+      entities: (record.keywords || []).map((k) => ({ text: k, label: 'KEYWORD', confidence: 0.95 })),
+      key_facts: [
+        `Historical transformation archived from MongoDB storage.`,
+        `Source document: ${record.source_title}`,
+        `Generated channels: ${(record.selected_channels || []).join(', ')}`
+      ],
+      summary: record.source_text?.slice(0, 300) || '',
+      readability_score: 75.0,
+      lexical_richness: 0.72,
+      word_count: record.source_text ? record.source_text.split(/\s+/).length : 0
+    };
+
+    setNlpData(loadedNlp);
+    setOutputsData(record.artefacts || {});
+    setTransformedState(true);
+
+    setTimeout(() => {
+      const outputElem = document.getElementById('nlp-analysis-section') || document.getElementById('output-section');
+      if (outputElem) {
+        outputElem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 150);
+  };
 
   return (
     <div className="app-shell">
       <div className="app-glow-background"></div>
 
       <div className="app-layout">
-        <Header />
+        <Header onOpenHistory={() => setIsHistoryOpen(true)} />
 
         <main className="main-content-flow">
           {/* Section 1: Source Content Input */}
@@ -199,6 +242,7 @@ function App() {
             selectedTypesCount={selectedTypes.length}
             onTransform={handleTransform}
             onReset={handleReset}
+            onOpenHistory={() => setIsHistoryOpen(true)}
             isTransforming={isTransforming}
           />
 
@@ -216,7 +260,6 @@ function App() {
             transformedState={transformedState}
           />
 
-
           {/* Section 6: Generated Communication Artefacts */}
           <OutputSection
             transformedState={transformedState}
@@ -231,6 +274,13 @@ function App() {
 
         <Footer />
       </div>
+
+      {/* MongoDB Storage & History Modal */}
+      <HistoryModal
+        isOpen={isHistoryOpen}
+        onClose={() => setIsHistoryOpen(false)}
+        onSelectRecord={handleSelectHistoricalRecord}
+      />
     </div>
   );
 }
