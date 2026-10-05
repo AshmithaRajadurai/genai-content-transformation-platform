@@ -3,6 +3,7 @@ import { OUTPUT_TYPES } from '../data/constants';
 import {
   SparklesIcon,
   CopyIcon,
+  DownloadIcon,
   CodeIcon,
   FileTextIcon,
   LinkedInIcon,
@@ -25,6 +26,8 @@ export default function OutputSection({
   const [selectedTab, setSelectedTab] = useState('');
   const [viewMode, setViewMode] = useState('formatted'); // 'formatted' | 'json' | 'llm_raw'
   const [copied, setCopied] = useState(false);
+  const [downloadFeedback, setDownloadFeedback] = useState(null);
+  const [checkedMitigations, setCheckedMitigations] = useState({});
 
   // Active tab derivation
   const activeTab = selectedTypes.includes(selectedTab)
@@ -67,6 +70,78 @@ export default function OutputSection({
     navigator.clipboard.writeText(textToCopy);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const toggleMitigationCheck = (index) => {
+    setCheckedMitigations((prev) => ({
+      ...prev,
+      [index]: !prev[index]
+    }));
+  };
+
+  const getFormatMarkdown = (formatKey, data) => {
+    if (!data) return '';
+    if (formatKey === 'linkedin') {
+      return `# ${data.title}\n\n${data.content}\n\n**Key Takeaways:**\n${data.key_takeaways?.map((t) => `- ${t}`).join('\n')}\n\n${data.hashtags?.join(' ')}`;
+    }
+    if (formatKey === 'twitter') {
+      return `# Twitter / X Thread (${data.thread_length || data.tweets?.length || 0} Tweets)\n\n**Hook:** ${data.hook}\n\n${data.tweets?.map((t) => `### Tweet ${t.index || 1}\n${t.text}`).join('\n\n')}\n\n${data.hashtags?.join(' ')}`;
+    }
+    if (formatKey === 'advisory') {
+      return `# [${data.advisory_id}] ${data.title}\n**Severity:** ${data.severity}\n\n## Impact Assessment\n${data.impact}\n\n## Affected Systems\n${data.affected_systems?.map((s) => `- ${s}`).join('\n')}\n\n## Mitigation Steps\n${data.mitigation_steps?.map((s, i) => `${i + 1}. [ ] ${s}`).join('\n')}`;
+    }
+    if (formatKey === 'executive') {
+      return `# Executive Briefing: ${data.title}\n\n## Executive Summary\n${data.summary}\n\n## Core Strategic Points\n${data.key_points?.map((p) => `- ${p}`).join('\n')}\n\n## Actionable Recommendations\n${data.recommendations?.map((r) => `- ${r}`).join('\n')}`;
+    }
+    if (formatKey === 'infographic') {
+      return `# Infographic Blueprint: ${data.headline_metric || data.headline_stat || 'Key Metric'} ${data.headline_label || ''}\n\n## Data Metrics\n${(data.data_callouts || data.key_callouts || [])?.map((c) => `- **${c.metric}:** ${c.label}`).join('\n')}\n\n## Visual Breakdown\n${(data.visual_sections || data.sections || [])?.map((s) => `### ${s.heading || s.header || s.title}\n${(s.bullets || s.bullet_points || [s.text || ''])?.map((b) => `- ${b}`).join('\n')}`).join('\n\n')}`;
+    }
+    if (formatKey === 'presentation') {
+      return `# Presentation Slide Deck (${data.total_slides || data.slides?.length || 0} Slides)\n\n${data.slides?.map((s) => `## Slide ${s.slide_number}: ${s.title}\n${(s.bullet_points || s.bullets || [])?.map((b) => `- ${b}`).join('\n')}\n\n> *Speaker Notes:* ${s.speaker_notes}`).join('\n\n---\n\n')}`;
+    }
+    if (formatKey === 'video') {
+      return `# Video Production Script\n**Target Objective:** ${data.objective || data.target_audience_objective}\n\n## Master Script\n${data.script || data.full_narration_script}\n\n## Storyboard Scenes\n${data.scenes?.map((s) => `### Scene ${s.scene_number}\n- **Visual:** ${s.visual || s.visual_direction}\n- **Audio:** "${s.audio_narration || s.narration_line}"`).join('\n\n')}`;
+    }
+    return JSON.stringify(data, null, 2);
+  };
+
+  const handleDownloadActive = () => {
+    if (!activeOutputContent) return;
+    const md = getFormatMarkdown(activeTab, activeOutputContent);
+    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${activeTab}_transformation.md`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    setDownloadFeedback(`Exported ${activeTab} (.md)`);
+    setTimeout(() => setDownloadFeedback(null), 2500);
+  };
+
+  const handleDownloadAllBundle = () => {
+    if (!outputsData) return;
+    let fullReport = `# GenAI Multi-Channel Content Transformation Report\n*Synthesized on ${new Date().toLocaleString()}*\n\n---\n\n`;
+    for (const ch of selectedTypes) {
+      if (outputsData[ch]) {
+        fullReport += `${getFormatMarkdown(ch, outputsData[ch])}\n\n---\n\n`;
+      }
+    }
+    const blob = new Blob([fullReport], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `genai_multichannel_briefing.md`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    setDownloadFeedback('Exported Full Briefing Bundle (.md)');
+    setTimeout(() => setDownloadFeedback(null), 2500);
   };
 
 
@@ -144,6 +219,31 @@ export default function OutputSection({
               )}
             </div>
 
+            {downloadFeedback && (
+              <span className="export-toast-pill">
+                {downloadFeedback}
+              </span>
+            )}
+
+            <button
+              type="button"
+              className="btn-pill"
+              onClick={handleDownloadActive}
+              title="Download active format as Markdown (.md)"
+            >
+              <DownloadIcon className="icon-tiny text-emerald-400" />
+              <span>Export .md</span>
+            </button>
+
+            <button
+              type="button"
+              className="btn-pill"
+              onClick={handleDownloadAllBundle}
+              title="Download all formats compiled into one briefing document"
+            >
+              <DownloadIcon className="icon-tiny text-indigo-400" />
+              <span>Export All Bundle</span>
+            </button>
 
             <button
               type="button"
@@ -356,12 +456,33 @@ export default function OutputSection({
                       </div>
 
                       <div className="advisory-section">
-                        <h4 className="advisory-subhead">Mitigation &amp; Remediation Procedures</h4>
-                        <ol className="mitigation-steps-list">
-                          {activeOutputContent.mitigation_steps?.map((step, i) => (
-                            <li key={i} className="mitigation-item">{step}</li>
-                          ))}
-                        </ol>
+                        <div className="advisory-subhead-row">
+                          <h4 className="advisory-subhead">Mitigation &amp; Remediation Procedures</h4>
+                          <span className="checklist-progress">
+                            {Object.values(checkedMitigations).filter(Boolean).length} of {activeOutputContent.mitigation_steps?.length || 0} implemented
+                          </span>
+                        </div>
+                        <ul className="mitigation-checklist">
+                          {activeOutputContent.mitigation_steps?.map((step, i) => {
+                            const isChecked = !!checkedMitigations[i];
+                            return (
+                              <li
+                                key={i}
+                                className={`mitigation-checklist-item ${isChecked ? 'mitigation-checked' : ''}`}
+                                onClick={() => toggleMitigationCheck(i)}
+                              >
+                                <input
+                                  type="checkbox"
+                                  className="mitigation-checkbox"
+                                  checked={isChecked}
+                                  onChange={() => toggleMitigationCheck(i)}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                                <span className="mitigation-text">{step}</span>
+                              </li>
+                            );
+                          })}
+                        </ul>
                       </div>
                     </div>
                   )}

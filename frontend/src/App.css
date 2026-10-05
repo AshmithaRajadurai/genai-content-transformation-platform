@@ -2910,4 +2910,91 @@
   transform: translateY(-1px);
 }
 
+/* Export Toast Notification Pill */
+.export-toast-pill {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  background: rgba(16, 185, 129, 0.18);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #34d399;
+  animation: fadeIn 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Interactive Advisory Checklist Styles */
+.advisory-subhead-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.checklist-progress {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.mitigation-checklist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mitigation-checklist-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.mitigation-checklist-item:hover {
+  background: rgba(30, 41, 59, 0.85);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.mitigation-checkbox {
+  width: 16px;
+  height: 16px;
+  margin-top: 3px;
+  accent-color: #10b981;
+  cursor: pointer;
+}
+
+.mitigation-text {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-main);
+  transition: all 0.15s ease;
+}
+
+.mitigation-checked {
+  background: rgba(16, 185, 129, 0.06);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+.mitigation-checked .mitigation-text {
+  color: var(--text-dim);
+  text-decoration: line-through;
+}
+
+
 
