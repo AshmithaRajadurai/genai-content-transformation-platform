@@ -13,7 +13,7 @@ from backend.app.modules.generation.schemas import (
     TransformationPipelineResponse,
 )
 from backend.app.modules.generation.service import GenerationService
-from backend.app.database.repositories.transformation_repository import TransformationRepository
+from backend.app.modules.history.service import HistoryService
 from backend.app.modules.history.schemas import TransformationRecord
 
 
@@ -123,7 +123,7 @@ class TransformationPipeline:
                 total_tokens=llm_batch_response.total_tokens,
                 execution_time_ms=latency_ms
             )
-            TransformationRepository.save(record, is_online=True)
+            HistoryService.save_transformation(record)
         except Exception:
             pass
 

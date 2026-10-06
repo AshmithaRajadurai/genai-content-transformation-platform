@@ -6,7 +6,12 @@ from .schemas import (
     RAGStatusResponse,
 )
 from .chunker import BaseChunker, TextChunker
-from .embeddings import BaseEmbeddingProvider
+from .embeddings import (
+    BaseEmbeddingProvider,
+    FastEmbedProvider,
+    DeterministicEmbeddingProvider,
+    get_embedding_provider,
+)
 from .vector_store import BaseVectorStore
 from .retriever import BaseRetriever
 from .service import RAGService
@@ -21,6 +26,9 @@ __all__ = [
     "BaseChunker",
     "TextChunker",
     "BaseEmbeddingProvider",
+    "FastEmbedProvider",
+    "DeterministicEmbeddingProvider",
+    "get_embedding_provider",
     "BaseVectorStore",
     "BaseRetriever",
     "RAGService",
