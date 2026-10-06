@@ -1,9 +1,9 @@
-from backend.app.services.ingestion_service import IngestionService
-from backend.app.services.nlp_service import NLPService
-from backend.app.services.context_service import ContextService
-from backend.app.services.llm_service import LLMService
+from backend.app.modules.ingestion.service import IngestionService
+from backend.app.modules.nlp.service import NLPService
+from backend.app.modules.context.service import ContextService
+from backend.app.modules.llm.service import LLMService
 from backend.app.services.transformation_service import TransformationService
-from backend.app.services.storage_service import StorageService
+from backend.app.modules.history.service import HistoryService as StorageService
 
 __all__ = [
     "IngestionService",
@@ -11,8 +11,5 @@ __all__ = [
     "ContextService",
     "LLMService",
     "TransformationService",
-    "StorageService"
+    "StorageService",
 ]
-
-
-

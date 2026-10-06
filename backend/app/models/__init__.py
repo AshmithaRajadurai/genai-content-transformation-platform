@@ -1,24 +1,24 @@
-from backend.app.models.source_model import SourceTextInput, IngestionResponse
-from backend.app.models.nlp_model import (
+from backend.app.modules.ingestion.schemas import SourceTextInput, IngestionResponse
+from backend.app.modules.nlp.schemas import (
     NLPAnalysisRequest,
     NLPAnalysisResponse,
     NamedEntity,
-    KeywordItem
+    KeywordItem,
 )
-from backend.app.models.context_model import (
+from backend.app.modules.context.schemas import (
     ChannelInstruction,
     ContextBuildRequest,
     ChannelContextPrompt,
-    CompiledContextPayload
+    CompiledContextPayload,
 )
-from backend.app.models.llm_model import (
+from backend.app.modules.llm.schemas import (
     LLMProviderInfo,
     LLMGenerationRequest,
     LLMGenerationResponse,
     LLMBatchGenerationRequest,
-    LLMBatchGenerationResponse
+    LLMBatchGenerationResponse,
 )
-from backend.app.models.transformation_model import (
+from backend.app.modules.generation.schemas import (
     LinkedInArtefact,
     TwitterArtefact,
     TweetItem,
@@ -31,13 +31,13 @@ from backend.app.models.transformation_model import (
     VideoScriptArtefact,
     VideoScene,
     TransformationPipelineRequest,
-    TransformationPipelineResponse
+    TransformationPipelineResponse,
 )
-from backend.app.models.storage_model import (
+from backend.app.modules.history.schemas import (
     TransformationRecord,
     HistoryItemSummary,
     HistoryListResponse,
-    StorageHealthResponse
+    StorageHealthResponse,
 )
 
 __all__ = [
@@ -72,9 +72,5 @@ __all__ = [
     "TransformationRecord",
     "HistoryItemSummary",
     "HistoryListResponse",
-    "StorageHealthResponse"
+    "StorageHealthResponse",
 ]
-
-
-
-

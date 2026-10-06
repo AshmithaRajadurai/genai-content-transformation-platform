@@ -1,18 +1,20 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.app.database import db
-from backend.app.routes.source_routes import router as source_router
-from backend.app.routes.nlp_routes import router as nlp_router
-from backend.app.routes.context_routes import router as context_router
-from backend.app.routes.llm_routes import router as llm_router
-from backend.app.routes.transformation_routes import router as transformation_router
-from backend.app.routes.history_routes import router as history_router
+from backend.app.core.config import settings
+from backend.app.database.connection import db
+from backend.app.modules.ingestion.router import router as source_router
+from backend.app.modules.nlp.router import router as nlp_router
+from backend.app.modules.context.router import router as context_router
+from backend.app.modules.llm.router import router as llm_router
+from backend.app.modules.orchestration.router import router as transformation_router
+from backend.app.modules.history.router import router as history_router
+from backend.app.modules.rag.router import router as rag_router
 
 app = FastAPI(
-    title="GenAI Content Transformation Platform",
-    description="AI-powered multi-channel content transformation platform integrating NLP, Context Engine, LLM, Generative AI, and MongoDB Storage.",
-    version="0.3.0"
+    title=settings.PROJECT_NAME,
+    description="AI-powered multi-channel content transformation platform integrating NLP, RAG, Context Engine, LLM (n8n ready), Generative AI, and MongoDB Storage.",
+    version=settings.PROJECT_VERSION
 )
 
 # Enable CORS for frontend clients
@@ -36,9 +38,7 @@ app.include_router(context_router)
 app.include_router(llm_router)
 app.include_router(transformation_router)
 app.include_router(history_router)
-
-
-
+app.include_router(rag_router)
 
 
 @app.get("/", tags=["System"])
