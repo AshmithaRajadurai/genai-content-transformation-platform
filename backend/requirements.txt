@@ -5,4 +5,6 @@ dnspython
 python-dotenv
 python-multipart
 pypdf
-python-docx
+python-docx
+fastembed
+numpy
