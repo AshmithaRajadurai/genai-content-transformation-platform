@@ -12,9 +12,18 @@ logger = logging.getLogger("rag_embeddings")
 class BaseEmbeddingProvider(ABC):
     """Abstract interface for dense embedding generation."""
 
+    provider_name: str = "BaseEmbeddingProvider"
+    model_name: str = "base"
+    dimension: int = 384
+
     @abstractmethod
     def embed_text(self, text: str) -> List[float]:
         """Generates embedding vector for a single query or text."""
+        pass
+
+    @abstractmethod
+    def embed_batch(self, texts: List[str]) -> List[List[float]]:
+        """Generates embedding vectors for a list of strings."""
         pass
 
     @abstractmethod
@@ -36,9 +45,10 @@ class FastEmbedProvider(BaseEmbeddingProvider):
     """
 
     def __init__(self, model_name: str = "BAAI/bge-small-en-v1.5"):
+        self.provider_name = "FastEmbed"
         self.model_name = model_name
+        self.dimension = 384
         self._model = None
-        self._dimension = 384
 
     def _get_model(self):
         if self._model is None:
@@ -47,33 +57,40 @@ class FastEmbedProvider(BaseEmbeddingProvider):
         return self._model
 
     def get_dimension(self) -> int:
-        return self._dimension
+        return self.dimension
 
     def embed_text(self, text: str) -> List[float]:
         if not text or not text.strip():
-            return [0.0] * self._dimension
+            return [0.0] * self.dimension
         model = self._get_model()
         generator = model.embed([text])
         emb = next(generator)
         return emb.tolist() if hasattr(emb, "tolist") else list(emb)
 
+    def embed_batch(self, texts: List[str]) -> List[List[float]]:
+        if not texts:
+            return []
+        model = self._get_model()
+        generator = model.embed(texts)
+        results: List[List[float]] = []
+        for emb in generator:
+            vec = emb.tolist() if hasattr(emb, "tolist") else list(emb)
+            results.append(vec)
+        return results
+
     def embed_chunks(self, chunks: List[TextChunk]) -> List[EmbeddingVector]:
         if not chunks:
             return []
         texts = [chunk.text for chunk in chunks]
-        model = self._get_model()
-        embeddings_gen = model.embed(texts)
-        results: List[EmbeddingVector] = []
-        for chunk, emb in zip(chunks, embeddings_gen):
-            vec = emb.tolist() if hasattr(emb, "tolist") else list(emb)
-            results.append(
-                EmbeddingVector(
-                    chunk_id=chunk.chunk_id,
-                    vector=vec,
-                    dimension=len(vec)
-                )
+        vectors = self.embed_batch(texts)
+        return [
+            EmbeddingVector(
+                chunk_id=chunk.chunk_id,
+                vector=vec,
+                dimension=len(vec)
             )
-        return results
+            for chunk, vec in zip(chunks, vectors)
+        ]
 
 
 class DeterministicEmbeddingProvider(BaseEmbeddingProvider):
@@ -84,21 +101,23 @@ class DeterministicEmbeddingProvider(BaseEmbeddingProvider):
     """
 
     def __init__(self, dimension: int = 384):
-        self._dimension = dimension
+        self.provider_name = "DeterministicFallback"
+        self.model_name = "sha256-hash-384"
+        self.dimension = dimension
 
     def get_dimension(self) -> int:
-        return self._dimension
+        return self.dimension
 
     def _hash_to_vector(self, text: str) -> List[float]:
         if not text:
-            return [0.0] * self._dimension
+            return [0.0] * self.dimension
 
         words = text.lower().split()
-        vec = [0.0] * self._dimension
+        vec = [0.0] * self.dimension
         for word in words:
             h = int(hashlib.sha256(word.encode("utf-8")).hexdigest(), 16)
-            for i in range(min(16, self._dimension)):
-                idx = (h + i * 31) % self._dimension
+            for i in range(min(16, self.dimension)):
+                idx = (h + i * 31) % self.dimension
                 sign = 1.0 if ((h >> i) & 1) else -1.0
                 vec[idx] += sign
 
@@ -110,14 +129,17 @@ class DeterministicEmbeddingProvider(BaseEmbeddingProvider):
     def embed_text(self, text: str) -> List[float]:
         return self._hash_to_vector(text)
 
+    def embed_batch(self, texts: List[str]) -> List[List[float]]:
+        return [self._hash_to_vector(t) for t in texts]
+
     def embed_chunks(self, chunks: List[TextChunk]) -> List[EmbeddingVector]:
         return [
             EmbeddingVector(
                 chunk_id=chunk.chunk_id,
                 vector=self._hash_to_vector(chunk.text),
-                dimension=self._dimension
+                dimension=self.dimension
             )
-            for chunk in chunks
+            for chunk, vec in zip(chunks, [None] * len(chunks))
         ]
 
 
