@@ -12,7 +12,7 @@ from .embeddings import (
     DeterministicEmbeddingProvider,
     get_embedding_provider,
 )
-from .vector_store import BaseVectorStore
+from .vector_store import BaseVectorStore, InMemoryVectorStore
 from .retriever import BaseRetriever
 from .service import RAGService
 from .router import router
@@ -30,6 +30,7 @@ __all__ = [
     "DeterministicEmbeddingProvider",
     "get_embedding_provider",
     "BaseVectorStore",
+    "InMemoryVectorStore",
     "BaseRetriever",
     "RAGService",
     "router",
