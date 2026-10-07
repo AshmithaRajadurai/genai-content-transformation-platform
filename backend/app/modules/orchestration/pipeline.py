@@ -51,8 +51,28 @@ class TransformationPipeline:
             )
         )
 
-        # Step 3: Optional RAG Integration Point (Hook for future semantic retrieval)
-        # rag_context = RAGService.retrieve_relevant_chunks(cleaned_text) if request.use_rag else None
+        # Step 3: Semantic RAG Retrieval (Layer 2.5)
+        retrieved_passages: list = []
+        if request.use_rag:
+            try:
+                from backend.app.modules.rag.service import RAGService
+                rag_doc_id = str(uuid.uuid4())
+                RAGService.index_document(
+                    text=cleaned_text,
+                    document_id=rag_doc_id,
+                    title=request.title,
+                    chunk_size=400,
+                    chunk_overlap=50
+                )
+                search_query = request.title or nlp_data.topic or cleaned_text[:200]
+                matches = RAGService.retrieve_context(
+                    query=search_query,
+                    top_k=request.rag_top_k or 3,
+                    document_id=rag_doc_id
+                )
+                retrieved_passages = [m.text for m in matches]
+            except Exception:
+                retrieved_passages = []
 
         # Step 4: Context Engineering (Layer 3)
         target_channels = [cls.CHANNEL_MAPPING.get(c, c) for c in request.target_channels]
@@ -74,7 +94,8 @@ class TransformationPipeline:
             audience=request.audience,
             tone=request.tone,
             language=request.language,
-            detail_level=detail_param
+            detail_level=detail_param,
+            retrieved_passages=retrieved_passages
         )
         context_payload = ContextService.build_context(ctx_req)
 

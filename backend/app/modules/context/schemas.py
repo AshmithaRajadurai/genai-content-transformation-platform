@@ -30,6 +30,10 @@ class ContextBuildRequest(BaseModel):
     tone: Optional[str] = Field("Professional & Authoritative", description="Primary tone of voice")
     language: Optional[str] = Field("English", description="Target output language")
     detail_level: Optional[str] = Field("balanced", description="Detail depth: concise, balanced, or comprehensive")
+    retrieved_passages: Optional[List[str]] = Field(
+        default=None,
+        description="Optional semantic passages retrieved via RAG to ground context prompts"
+    )
 
 
 class ChannelContextPrompt(BaseModel):
@@ -54,4 +58,8 @@ class CompiledContextPayload(BaseModel):
     detail_level: str = Field(..., description="Detail level: concise, balanced, comprehensive")
     global_system_instruction: str = Field(..., description="Global guardrails and anti-hallucination instructions")
     channel_prompts: Dict[str, ChannelContextPrompt] = Field(..., description="Ready-to-execute prompts for each requested channel")
+    retrieved_passages: List[str] = Field(
+        default_factory=list,
+        description="Semantic context passages retrieved via RAG vector search"
+    )
     compiled_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat(), description="ISO timestamp of compilation")

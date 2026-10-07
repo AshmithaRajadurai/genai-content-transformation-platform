@@ -123,6 +123,8 @@ class TransformationPipelineRequest(BaseModel):
     language: Optional[str] = Field("English (US)", description="Output language")
     detail_level: Optional[str] = Field("Balanced (Standard Comprehensive Overview)", description="Detail level")
     provider: Optional[str] = Field("auto", description="LLM provider: auto, gemini, openai, fallback, n8n")
+    use_rag: Optional[bool] = Field(False, description="Enable local semantic RAG retrieval to ground context")
+    rag_top_k: Optional[int] = Field(3, ge=1, le=10, description="Top-k passages to retrieve from vector store")
 
 
 class TransformationPipelineResponse(BaseModel):

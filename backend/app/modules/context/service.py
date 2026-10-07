@@ -167,7 +167,8 @@ class ContextService:
         audience: str,
         tone: str,
         language: str,
-        detail_level: str
+        detail_level: str,
+        retrieved_passages: Optional[List[str]] = None,
     ) -> ChannelContextPrompt:
         channel_config = CHANNEL_DEFINITIONS.get(
             channel_id,
@@ -207,11 +208,18 @@ class ContextService:
         if nlp_data.entities:
             top_entity_names = [e.name for e in nlp_data.entities[:6]]
             grounding_rules.append(f"Ensure accurate reference to: {', '.join(top_entity_names)}.")
+        if retrieved_passages:
+            grounding_rules.append("Ground assertions in the retrieved semantic RAG knowledge passages.")
 
         # Build Formatted User Prompt
         facts_block = "\n".join([f"{i+1}. {fact}" for i, fact in enumerate(nlp_data.key_facts)])
         keywords_block = ", ".join(nlp_data.keywords[:10])
         entities_block = ", ".join([f"{e.name} [{e.type}]" for e in nlp_data.entities[:8]])
+
+        rag_block = ""
+        if retrieved_passages:
+            passages_lines = "\n".join([f"- [Passage {i+1}]: {p}" for i, p in enumerate(retrieved_passages)])
+            rag_block = f"\n\nRETRIEVED KNOWLEDGE PASSAGES (RAG SEMANTIC GROUNDING):\n{passages_lines}"
 
         user_prompt = (
             f"DOCUMENT TITLE: {source_title}\n"
@@ -221,7 +229,8 @@ class ContextService:
             "CORE VERIFIED FACTS:\n"
             f"{facts_block}\n\n"
             "CONTEXT SUMMARY:\n"
-            f"{nlp_data.summary_context}\n\n"
+            f"{nlp_data.summary_context}"
+            f"{rag_block}\n\n"
             f"TASK INSTRUCTION:\n"
             f"Transform this verified intelligence into a publication-ready {channel_name}.\n"
             f"Audience: {audience}\n"
@@ -278,6 +287,7 @@ class ContextService:
         if not target_channels:
             target_channels = ["linkedin", "executive_summary"]
 
+        passages = request.retrieved_passages or []
         channel_prompts: Dict[str, ChannelContextPrompt] = {}
         for channel_id in target_channels:
             prompt = cls.generate_channel_prompt(
@@ -287,7 +297,8 @@ class ContextService:
                 audience=audience,
                 tone=tone,
                 language=language,
-                detail_level=detail_level
+                detail_level=detail_level,
+                retrieved_passages=passages,
             )
             channel_prompts[channel_id] = prompt
 
@@ -305,5 +316,6 @@ class ContextService:
             detail_level=detail_level,
             global_system_instruction=global_instruction,
             channel_prompts=channel_prompts,
+            retrieved_passages=passages,
             compiled_at=datetime.now(timezone.utc).isoformat()
         )
