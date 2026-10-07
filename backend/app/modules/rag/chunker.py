@@ -34,15 +34,26 @@ class TextChunker(BaseChunker):
             return []
 
         cleaned = text.strip()
-        paragraphs = [p.strip() for p in re.split(r"\n\s*\n+", cleaned) if p.strip()]
+        raw_paragraphs = [p.strip() for p in re.split(r"\n\s*\n+", cleaned) if p.strip()]
+
+        # Break overly large paragraphs into sentence-level segments
+        segments: List[str] = []
+        for p in raw_paragraphs:
+            if len(p) <= chunk_size:
+                segments.append(p)
+            else:
+                sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+", p) if s.strip()]
+                segments.extend(sentences if sentences else [p])
+
         chunks: List[TextChunk] = []
         current_text = ""
         char_offset = 0
         chunk_idx = 0
 
-        for para in paragraphs:
-            if len(current_text) + len(para) <= chunk_size:
-                current_text = f"{current_text}\n\n{para}".strip()
+        for seg in segments:
+            candidate = f"{current_text} {seg}".strip() if current_text else seg
+            if len(candidate) <= chunk_size:
+                current_text = candidate
             else:
                 if current_text:
                     c_id = str(uuid.uuid4())
@@ -64,7 +75,7 @@ class TextChunker(BaseChunker):
                         )
                     ))
                     chunk_idx += 1
-                current_text = para
+                current_text = seg
 
         if current_text:
             c_id = str(uuid.uuid4())
