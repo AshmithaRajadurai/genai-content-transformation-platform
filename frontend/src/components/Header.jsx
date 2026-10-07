@@ -13,6 +13,10 @@ export default function Header({ onOpenHistory }) {
             <span className="dot dot-green"></span>
             FastAPI Backend
           </span>
+          <span className="status-pill status-ready" title="RAG Engine: FastEmbed (BAAI/bge-small-en-v1.5) + Vector Store">
+            <span className="dot dot-green"></span>
+            Local RAG (FastEmbed)
+          </span>
           <button
             type="button"
             className="status-pill status-ready"

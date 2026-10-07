@@ -139,9 +139,9 @@ export const PIPELINE_STAGES = [
   {
     id: 'context',
     step: 3,
-    title: 'Context Engine',
-    subtitle: 'Parameters & metadata unified',
-    description: 'Fusing source + NLP insights + persona, tone & communication objective.'
+    title: 'RAG & Context Engine',
+    subtitle: 'Vector retrieval & grounding',
+    description: 'Dense vector retrieval (FastEmbed) + factual grounding + persona alignment.'
   },
   {
     id: 'llm',

@@ -79,7 +79,8 @@ function App() {
           tone: settings.tone,
           language: settings.language,
           detail_level: settings.detailLevel,
-          provider: 'auto'
+          provider: 'auto',
+          use_rag: true
         })
       });
       if (transformResp.ok) {
